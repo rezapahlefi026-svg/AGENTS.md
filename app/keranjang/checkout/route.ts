@@ -1,6 +1,7 @@
 import { cartProductSelect, parseCartIds } from "../../../lib/cart";
 import { formatRupiah, formatUkuran } from "../../../lib/format";
 import { prisma } from "../../../lib/prisma";
+import { storeName } from "../../../lib/store-name";
 
 export async function POST(request: Request) {
   const form = await request.formData();
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   });
   const total = products.reduce((sum, product) => sum + product.harga, 0);
   const pesan = [
-    "Halo, saya ingin memesan barang berikut:",
+    `Halo ${storeName}, saya ingin memesan barang berikut:`,
     ...items,
     "",
     `Total harga: ${formatRupiah(total)}`,
