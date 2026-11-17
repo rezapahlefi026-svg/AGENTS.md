@@ -1,12 +1,11 @@
 "use server";
 
-import { unlink } from "node:fs/promises";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { KategoriProduk, StatusProduk, UkuranLabel } from "../../generated/prisma/enums";
 import { endAdminSession, matchesAdminPassword, requireAdmin, startAdminSession } from "../../lib/admin-session";
 import { prisma } from "../../lib/prisma";
-import { saveProductPhoto } from "../../lib/product-upload";
+import { compressProductPhoto } from "../../lib/product-upload";
 
 function text(form: FormData, name: string) {
   const value = form.get(name);
@@ -41,7 +40,7 @@ export async function logout() {
 }
 
 function validPhotoUrl(value: string) {
-  if (/^\/(?:products|foto-unggahan)\/[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(value)) return true;
+  if (/^\/products\/[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(value)) return true;
   try {
     const url = new URL(value);
     return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password;
@@ -77,29 +76,24 @@ export async function saveProduct(form: FormData) {
       !/^\d+$/.test(hargaText) || harga > 2147483647 || catatanMinus.length > 1000) {
     redirect("/admin?info=data");
   }
-  if (!hasUpload && (url.length > 2048 || !validPhotoUrl(url))) redirect("/admin?info=foto");
-
-  const upload = hasUpload ? await saveProductPhoto(file) : null;
-  if (hasUpload && !upload) redirect("/admin?info=foto");
-
-  const data = { nama, kategori, ukuranLabel, panjangCm, lebarCm, kondisi, harga, catatanMinus, status, fotoUrl: upload?.url ?? url };
-
-  let saved = true;
-  try {
-    if (id === undefined) {
-      await prisma.product.create({ data });
-    } else {
-      const updated = await prisma.product.updateMany({ where: { id }, data });
-      saved = Boolean(updated.count);
-    }
-  } catch (error) {
-    if (upload) await unlink(upload.path).catch(() => {});
-    throw error;
+  if (!hasUpload && (url || id === undefined) && (url.length > 2048 || !validPhotoUrl(url))) {
+    redirect("/admin?info=foto");
   }
 
-  if (!saved) {
-    if (upload) await unlink(upload.path);
-    redirect("/admin?info=hilang");
+  const upload = hasUpload ? await compressProductPhoto(file) : null;
+  if (hasUpload && !upload) redirect("/admin?info=foto");
+
+  const data = { nama, kategori, ukuranLabel, panjangCm, lebarCm, kondisi, harga, catatanMinus, status };
+  const fotoUrl = upload || url;
+
+  if (id === undefined) {
+    await prisma.product.create({ data: { ...data, fotoUrl } });
+  } else {
+    const updated = await prisma.product.updateMany({
+      where: { id },
+      data: { ...data, ...(fotoUrl ? { fotoUrl } : {}) },
+    });
+    if (!updated.count) redirect("/admin?info=hilang");
   }
 
   refreshStore(id);

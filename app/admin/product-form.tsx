@@ -1,5 +1,6 @@
 import type { Product } from "../../generated/prisma/client";
 import { KategoriProduk, StatusProduk, UkuranLabel } from "../../generated/prisma/enums";
+import { uploadedPhotoPrefix } from "../../lib/product-photo";
 import { saveProduct } from "./actions";
 
 const control = "w-full min-w-0 rounded-md border border-line bg-white px-3 py-2 font-normal";
@@ -38,12 +39,12 @@ export function ProductForm({ product }: { product?: Product }) {
         <textarea className={control} name="catatanMinus" rows={2} maxLength={1000} defaultValue={product?.catatanMinus} />
       </label>
       <label className={label}>URL foto
-        <input className={control} name="fotoUrl" inputMode="url" maxLength={2048} placeholder="https://" defaultValue={product?.fotoUrl} />
+        <input className={control} name="fotoUrl" inputMode="url" maxLength={2048} placeholder="https://" defaultValue={product?.fotoUrl.startsWith(uploadedPhotoPrefix) ? undefined : product?.fotoUrl} />
       </label>
       <label className={label}>Unggah foto lokal
         <input className={`${control} text-xs file:mr-2 file:font-semibold`} name="foto" type="file" accept="image/jpeg,image/png,image/webp" />
       </label>
-      <p className="text-xs text-muted sm:col-span-2">Pilih URL atau file JPG, PNG, atau WebP hingga 5 MB. Jika keduanya diisi, file yang digunakan.</p>
+      <p className="text-xs text-muted sm:col-span-2">Pilih URL atau file JPG, PNG, atau WebP hingga 4 MB. Jika keduanya diisi, file yang digunakan. {product && "Kosongkan keduanya untuk mempertahankan foto saat ini."}</p>
       <label className={label}>Status
         <select className={control} name="status" defaultValue={product?.status ?? StatusProduk.tersedia}>
           <option value={StatusProduk.tersedia}>Tersedia</option>

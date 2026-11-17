@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatRupiah, formatUkuran } from "../../../lib/format";
+import { productPhotoSrc } from "../../../lib/product-photo";
 import { prisma } from "../../../lib/prisma";
 import { ProductPhoto } from "../../product-photo";
 import { AddToCart } from "../../cart-controls";
@@ -23,7 +24,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
       </Link>
       <article className="mt-5 grid items-start gap-7 md:grid-cols-2 md:gap-12 lg:gap-16">
         <div className="relative aspect-square overflow-hidden rounded-lg bg-sand">
-          <ProductPhoto nama={product.nama} fotoUrl={product.fotoUrl} soldOut={soldOut} sizes="(min-width: 768px) 50vw, 100vw" priority />
+          <ProductPhoto nama={product.nama} fotoUrl={productPhotoSrc(product.id, product.fotoUrl)} soldOut={soldOut} sizes="(min-width: 768px) 50vw, 100vw" priority />
         </div>
         <div>
           <p className="text-sm font-semibold text-muted">{product.kategori}</p>

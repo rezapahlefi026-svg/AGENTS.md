@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { productPhotoSrc } from "../lib/product-photo";
 import { prisma } from "../lib/prisma";
 import { ProductCatalog } from "./product-catalog";
 
@@ -24,7 +25,7 @@ export default async function Home() {
           <Image src="/products/denim.webp" alt="Jaket denim biru vintage" fill sizes="(min-width: 640px) 50vw, 100vw" preload className="object-cover object-center" />
         </div>
       </section>
-      <ProductCatalog products={products} />
+      <ProductCatalog products={products.map((product) => ({ ...product, fotoUrl: productPhotoSrc(product.id, product.fotoUrl) }))} />
     </main>
   );
 }
