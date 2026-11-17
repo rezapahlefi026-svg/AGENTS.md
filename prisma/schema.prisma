@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum KategoriProduk {
+  Jaket
+  Kaos
+  Celana
+  Aksesoris
+}
+
+enum UkuranLabel {
+  S
+  M
+  L
+  XL
+}
+
+enum StatusProduk {
+  tersedia
+  sold_out
+}
+
+model Product {
+  id           Int            @id @default(autoincrement())
+  nama         String
+  kategori     KategoriProduk
+  ukuranLabel  UkuranLabel
+  panjangCm    Float
+  lebarCm      Float
+  kondisi      Int
+  catatanMinus String         @default("")
+  harga        Int
+  fotoUrl      String
+  status       StatusProduk   @default(tersedia)
+}
