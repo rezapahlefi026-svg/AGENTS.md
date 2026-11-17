@@ -1,4 +1,4 @@
-# Toko Thrift
+# metscnd.id
 
 Proyek Next.js App Router dengan TypeScript, Tailwind CSS, Prisma, dan PostgreSQL.
 
