@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { isAdmin } from "../../lib/admin-session";
 import { formatRupiah } from "../../lib/format";
+import { productPhotoSrc } from "../../lib/product-photo";
 import { prisma } from "../../lib/prisma";
 import { ProductPhoto } from "../product-photo";
 import { deleteProduct, login, logout, setProductStatus } from "./actions";
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 const messages = {
   data: "Periksa kembali detail produk.",
-  foto: "Masukkan URL foto yang valid atau unggah file JPG, PNG, atau WebP hingga 5 MB.",
+  foto: "Masukkan URL foto yang valid atau unggah file JPG, PNG, atau WebP hingga 4 MB.",
   hilang: "Produk sudah tidak ada.",
   simpan: "Produk berhasil disimpan.",
   status: "Status produk berhasil diperbarui.",
@@ -66,7 +67,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-sand">
-                        <ProductPhoto nama={product.nama} fotoUrl={product.fotoUrl} sizes="56px" />
+                        <ProductPhoto nama={product.nama} fotoUrl={productPhotoSrc(product.id, product.fotoUrl)} sizes="56px" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="break-words font-semibold"><Link href={`/produk/${product.id}`} className="hover:underline">{product.nama}</Link></h3>

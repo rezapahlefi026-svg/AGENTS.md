@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { productPhotoRoute } from "../lib/product-photo";
 
 export function ProductPhoto({
   nama,
@@ -20,7 +21,7 @@ export function ProductPhoto({
         alt={nama}
         fill
         sizes={sizes}
-        unoptimized={/^https?:\/\//i.test(fotoUrl) || fotoUrl.startsWith("/foto-unggahan/")}
+        unoptimized={/^https?:\/\//i.test(fotoUrl) || fotoUrl.startsWith(productPhotoRoute)}
         preload={priority}
         className="object-cover transition-transform duration-300 group-hover:scale-[1.035]"
       />

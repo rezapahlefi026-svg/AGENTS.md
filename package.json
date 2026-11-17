@@ -4,18 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && npm run db:setup && next build",
     "start": "next start",
     "lint": "eslint .",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "node prisma/seed.mjs"
+    "db:seed": "node prisma/seed.mjs",
+    "db:setup": "prisma db push && npm run db:seed"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "7.10.1",
+    "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "dotenv": "18.0.10",
     "next": "16.4.6",
+    "pg": "8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "sharp": "0.35.5"

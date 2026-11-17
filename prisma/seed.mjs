@@ -1,13 +1,11 @@
 import "dotenv/config";
-import { DatabaseSync } from "node:sqlite";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import pg from "pg";
+import { databaseSchema, requireDatabaseUrl } from "../lib/database-url.mjs";
 
-const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
-if (!url.startsWith("file:")) throw new Error("DATABASE_URL harus berupa URL file SQLite.");
-
-const path = url.startsWith("file://") ? new URL(url) : pathToFileURL(resolve(url.slice(5)));
-const db = new DatabaseSync(path);
+const connectionString = requireDatabaseUrl();
+const schema = databaseSchema(connectionString).replaceAll('"', '""');
+const table = `"${schema}"."Product"`;
+const client = new pg.Client({ connectionString });
 
 const products = [
   ["Jaket Denim Vintage", "Jaket", "L", 66, 56, 9, "Pudar ringan di lipatan siku.", 185000, "denim", "tersedia"],
@@ -18,23 +16,29 @@ const products = [
   ["Kaos Marun Vintage", "Kaos", "S", 60, 46, 7, "Ada satu lubang kecil dekat jahitan samping.", 70000, "kaos-marun", "sold_out"],
 ];
 
+await client.connect();
 try {
-  const existing = db.prepare('SELECT 1 FROM "Product" WHERE "fotoUrl" = ?');
-  const insert = db.prepare(`
-    INSERT INTO "Product"
-      ("nama", "kategori", "ukuranLabel", "panjangCm", "lebarCm", "kondisi", "catatanMinus", "harga", "fotoUrl", "status")
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  await client.query("BEGIN");
+  // Serialize the empty-table check across simultaneous builds.
+  await client.query(`LOCK TABLE ${table} IN SHARE ROW EXCLUSIVE MODE`);
+  const { rowCount } = await client.query(`SELECT 1 FROM ${table} LIMIT 1`);
 
-  db.exec("BEGIN IMMEDIATE");
-  for (const [nama, kategori, ukuranLabel, panjangCm, lebarCm, kondisi, catatanMinus, harga, photo, status] of products) {
-    const fotoUrl = `/products/${photo}.webp`;
-    if (!existing.get(fotoUrl)) {
-      insert.run(nama, kategori, ukuranLabel, panjangCm, lebarCm, kondisi, catatanMinus, harga, fotoUrl, status);
+  if (rowCount === 0) {
+    for (const [nama, kategori, ukuranLabel, panjangCm, lebarCm, kondisi, catatanMinus, harga, photo, status] of products) {
+      await client.query(
+        `INSERT INTO ${table}
+          ("nama", "kategori", "ukuranLabel", "panjangCm", "lebarCm", "kondisi", "catatanMinus", "harga", "fotoUrl", "status")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [nama, kategori, ukuranLabel, panjangCm, lebarCm, kondisi, catatanMinus, harga, `/products/${photo}.webp`, status],
+      );
     }
   }
-  db.exec("COMMIT");
-  console.log("Data contoh katalog siap.");
+
+  await client.query("COMMIT");
+  console.log(rowCount === 0 ? "Data contoh katalog siap." : "Katalog sudah berisi produk.");
+} catch (error) {
+  await client.query("ROLLBACK").catch(() => {});
+  throw error;
 } finally {
-  db.close();
+  await client.end();
 }
